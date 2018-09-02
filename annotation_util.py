@@ -164,8 +164,9 @@ def _read_annotations(csv_reader, has_real_world_coordinates):
         if not has_real_world_coordinates:
             result[img_file].append({'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_id})
         else:
-            region_attributes_no_brackets = region_attributes.replace("{", "").replace("}", "").replace('"','')
-            if not region_attributes_no_brackets == '':
+            region_attributes_no_brackets = region_attributes.replace("{", "").replace("}", "").replace('"', '')
+            file_attributes_no_brackets = file_attributes.replace("{", "").replace("}", "").replace('"', '')
+            if not region_attributes_no_brackets == '' and not file_attributes_no_brackets == '':
                 data_arr = region_attributes_no_brackets.split(",")
                 crater_id = data_arr[0].rpartition(":")[2]
                 lat = data_arr[1].rpartition(":")[2]
@@ -173,10 +174,15 @@ def _read_annotations(csv_reader, has_real_world_coordinates):
                 crater_id = parse(crater_id, int, 'line {}: malformed id: {{}}'.format(line))
                 lat = parse(lat, float, 'line {}: malformed lat: {{}}'.format(line))
                 lon = parse(lon, float, 'line {}: malformed lon: {{}}'.format(line))
+                data_arr = file_attributes_no_brackets.split(",")
+                img_lat = data_arr[0].rpartition(":")[2]
+                img_lon = data_arr[1].rpartition(":")[2]
+                img_lat = parse(img_lat, float, 'line {}: malformed lat: {{}}'.format(line))
+                img_lon = parse(img_lon, float, 'line {}: malformed lon: {{}}'.format(line))
                 result[img_file].append(
-                    {'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_id, 'crater_id': crater_id, 'lat': lat, 'lon': lon})
+                    {'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_id, 'crater_id': crater_id, 'lat': lat,
+                     'lon': lon, 'img_lat': img_lat, 'img_lon': img_lon})
     return result
-
 
 # dest_main = getcwd() + '/dataset/train'
 # dest_test = getcwd() + '/dataset/validate'

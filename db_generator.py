@@ -1,5 +1,3 @@
-from scipy.spatial import distance as dist
-from sklearn.neighbors import DistanceMetric as DM
 import csv
 import ogr
 import time
@@ -11,10 +9,9 @@ from operator import itemgetter
 from math import sqrt, degrees, sin, pi, fabs
 from itertools import combinations as combos
 import k_vector
+from util import approximate_visual_distance, calculate_pair_distances
 
-radius_moon = 1737.5
-circumference_moon = 2 * pi * radius_moon
-db_basic_path = ''
+db_basic_path = 'crater_database/'
 file_crater_db = db_basic_path + 'crater_db.h5'
 file_pairs_db = db_basic_path + 'pairs_db.h5'
 file_pairs_index_db = db_basic_path + 'pairs_index.h5'
@@ -28,25 +25,6 @@ file_k_ints = db_basic_path + 'k_integers.h5'
 # driver = ogr.GetDriverByName('ESRI Shapefile')
 # shape_dataset = driver.Open(shape_file_win, 0)
 # shape_crater_layer = shape_dataset.GetLayer()
-
-
-def calculate_pair_distances(origin_coords, target_coords, origin_radius):
-    # origin_coords are supposed to be the coordinates of the bigger crater (relevant later for database structure)
-    haversine_dist = calculate_haversine_distance(origin_coords, target_coords)
-    approx_dist = approximate_visual_distance(haversine_dist)
-    rel_dist = approx_dist / origin_radius
-    return rel_dist, haversine_dist, approx_dist
-
-
-def calculate_haversine_distance(origin_coords, target_coords):
-    dist = DM.get_metric('haversine')
-    origin_coords, target_coords = map(np.radians, [origin_coords, target_coords])
-    return (radius_moon * dist.pairwise([origin_coords, target_coords]))[0][1]
-
-
-def approximate_visual_distance(haversine_dist):
-    theta = haversine_dist / radius_moon
-    return 2 * radius_moon * sin(theta / 2)
 
 
 def get_craters_from_shapefile(crater_layer):
@@ -81,7 +59,7 @@ def generate_basic_db():
     hdf.close()
 
 
-def generate_pairs_db():
+def generate_pairs_db(idx_start):
     start = time.time()
     hdf = pd.HDFStore(file_crater_db, 'r')
     db = hdf.get('/db')
@@ -146,12 +124,13 @@ def generate_pairs_db():
 
 
 def generate_k_vector_db():
-    index = np.array(h5py.File(db_basic_path + 'pairs_index.h5', 'r')['pairs_index'])
+    # index = np.array(h5py.File(db_basic_path + 'pairs_index.h5', 'r')['pairs_index'])
     pairs = np.array(h5py.File(db_basic_path + 'pairs_data.h5', 'r')['pairs_data'])
-    k_to_h5(k_vector.construct_k_vector(index[..., 0]), 'pairs_index_big')
-    k_to_h5(k_vector.construct_k_vector(index[..., 1]), 'pairs_index_small')
-    k_to_h5(k_vector.construct_k_vector(pairs[..., 0]), 'pairs_data_radius')
-    k_to_h5(k_vector.construct_k_vector(pairs[..., 1]), 'pairs_data_distance')
+    # k_to_h5(k_vector.construct_k_vector(index[..., 0]), 'pairs_index_big')
+    # k_to_h5(k_vector.construct_k_vector(index[..., 1]), 'pairs_index_small')
+    # k_to_h5(k_vector.construct_k_vector(pairs[..., 0]), 'pairs_data_radius')
+    # k_to_h5(k_vector.construct_k_vector(pairs[..., 1]), 'pairs_data_distance'
+    k_to_h5(k_vector.construct_k_vector(pairs[..., 2]), 'pairs_data_real_distance')
 
 
 def k_to_h5(arr, name):
@@ -182,4 +161,28 @@ def generate_basic_db_csv():
         db_writer.writerows(craters)
 
 
-generate_k_vector_db()
+def crop_db(idx=55885):
+    hdf = pd.HDFStore(db_basic_path + 'crater_db.h5', 'r')
+    crater_db = hdf.get('/db')
+    index = h5py.File(db_basic_path + 'pairs_index.h5', 'r')['pairs_index']
+    pairs = h5py.File(db_basic_path + 'pairs_data.h5', 'r')['pairs_data']
+    new_path = 'cropped/'
+    index = np.array(h5py.File(db_basic_path + 'pairs_index.h5', 'r')['pairs_index'])
+    pairs = np.array(h5py.File(db_basic_path + 'pairs_data.h5', 'r')['pairs_data'])
+    n_index = index.shape[0]
+    n_pairs = index.shape[0]
+    print(n_index, n_pairs)
+    validpairs = []
+    for i in range(n_pairs):
+        if index[i, 0] < idx or index[i, 1] < idx: continue
+        validpairs.append(i)
+
+    b = np.array(validpairs, dtype=np.uint32)
+    cropped_index = np.array(index[b], dtype=np.uint32)
+    cropped_pairs = np.array(pairs[b], dtype=np.uint16)
+    file_k = h5py.File(new_path + 'pairs_index.h5', 'w')
+    file_k.create_dataset('pairs_index', data=cropped_index, dtype=np.uint32)
+    file_k.close()
+    file_k = h5py.File(new_path + 'pairs_data.h5', 'w')
+    file_k.create_dataset('pairs_data', data=cropped_pairs, dtype=np.uint16)
+    file_k.close()

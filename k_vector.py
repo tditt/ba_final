@@ -25,7 +25,7 @@ def construct_k_vector(data):
     float_precision = np.finfo(np.float64).eps
     epsilon = float_precision * (max(abs(y_min), abs(y_max)))
 
-    # calculate line parameters m and q
+    # calculate "steeper line"-parameters m and q
     m = (y_max - y_min + 2 * epsilon) / (n - 1)
     q = y_min - m - epsilon
 

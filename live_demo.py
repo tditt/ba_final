@@ -10,7 +10,8 @@ from system_hotkey import SystemHotkey
 from retinanet.keras_retinanet.models import load_model
 from retinanet.keras_retinanet.utils.image import preprocess_image, resize_image
 from retinanet.keras_retinanet.utils.visualization import draw_box, draw_caption
-import crater_search_alternative2 as crater_search
+import crater_search_voting_relative as crater_search
+
 
 
 def _get_session():
@@ -24,7 +25,7 @@ sess = _get_session()
 keras.backend.tensorflow_backend.set_session(sess)
 stay_looped = True
 # model = load_model('final_models/inf_mobilenet.h5', backbone_name='mobilenet224_1.0')
-model = load_model('inf_experimental/final_resnet152_csv_73_withweights_FINALSETTINGS.h5', backbone_name='resnet152')
+model = load_model('trained_retinanet_models/inf/0830_resnet50_csv_56_withweights_FINALSETTINGS_1248px.h5', backbone_name='resnet50')
 graph = tf.get_default_graph()
 print('...ready!')
 
@@ -48,15 +49,15 @@ def _capture_and_detect():
     global model
     global sess
     global graph
-
     # parameters
-    score_threshold = 0.1
+    score_threshold = 0.999
     max_detections = 500
     rectangle_threshold = 1.1
+    box_minimum = 16
     cropped_image_pixels = 816
-    max_radius_multiplier = 16
+    max_radius_multiplier = 20
     # box_minimum = 1.05 * 2 * cropped_image_pixels / max_radius_multiplier
-    box_minimum = 32
+
 
     print('capturing screen...')
     screenshot = pyscreenshot.grab(bbox=None, childprocess=None, backend=None)
