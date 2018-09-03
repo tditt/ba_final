@@ -1,20 +1,15 @@
+import glob
+import math
+import os
+
 import affine
-import numpy as np
 import gdal
 import gdalnumeric
+import numpy as np
 import ogr
-import osr
-import os
-import math
-import glob
-import ntpath
-import os
 
 print('GDAL_DATA' in os.environ)
 # ntpath.basename("a/b/c")
-# rel_path = '\\resources\\LU78287GT_GIS\\LU78287GT_Moon2000.shp'
-# rel_path = '/resources/moontif/WAC_GLOBAL_E300N2250_100M.IMG'
-# rel_path = '/resources/moontif/WAC_GLOBAL_E300S2250_100M.TIF'
 tif_rel_path = '/resources/moontif/WAC_GLOBAL_P900N0000_100M.TIF'
 tif_file = os.getcwd() + tif_rel_path
 shape_rel_path = '\\resources\\LU78287GT_GIS\\LU78287GT_Moon2000.shp'

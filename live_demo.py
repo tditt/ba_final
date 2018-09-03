@@ -1,5 +1,6 @@
 import sys
 import time
+
 import cv2
 import keras
 import matplotlib.pyplot as plt
@@ -7,11 +8,10 @@ import numpy as np
 import pyscreenshot
 import tensorflow as tf
 from system_hotkey import SystemHotkey
-from retinanet.keras_retinanet.models import load_model
-from retinanet.keras_retinanet.utils.image import preprocess_image, resize_image
-from retinanet.keras_retinanet.utils.visualization import draw_box, draw_caption
-import crater_search_voting_relative as crater_search
 
+from retinanet.keras_retinanet.models import load_model
+from retinanet.keras_retinanet.utils.image import preprocess_image
+from retinanet.keras_retinanet.utils.visualization import draw_box, draw_caption
 
 
 def _get_session():
@@ -25,7 +25,7 @@ sess = _get_session()
 keras.backend.tensorflow_backend.set_session(sess)
 stay_looped = True
 # model = load_model('final_models/inf_mobilenet.h5', backbone_name='mobilenet224_1.0')
-model = load_model('trained_retinanet_models/inf/0830_resnet50_csv_56_withweights_FINALSETTINGS_1248px.h5', backbone_name='resnet50')
+model = load_model('trained_retinanet_models/inf/0826_resnet101_csv_62_withweights_FINALSETTINGS.h5', backbone_name='resnet101')
 graph = tf.get_default_graph()
 print('...ready!')
 
@@ -133,8 +133,6 @@ def _capture_and_detect():
     fig = plt.figure(figsize=(8, 8), dpi=102)
     fig.figimage(draw, xo=0, yo=0)
     plt.show()
-    crater_search.extract_coordinates(image_boxes, image_scores)
-
 
 if __name__ == '__main__':
     main()

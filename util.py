@@ -1,4 +1,5 @@
 from math import pi, sin
+
 import numpy as np
 from scipy.spatial.distance import cdist
 from sklearn.neighbors import DistanceMetric as DM
@@ -45,11 +46,12 @@ def calculate_distance(point_a, point_b, correction_factor=.97):
 
 
 def calculate_dynamic_r_rel_tol(r, w_max, w_min):
-    tol = 1 + ((w_max / r) ** 2 / (w_max / w_min) ** 1.8)
+    # gives large tolerances for small radius, small tolerances for large radius
+    tol = 1 + ((w_max / r) ** 2 / (w_max / w_min) ** 1.85)
     return tol
 
 
-# progress bar source code taken https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
+# progress bar source code copied from https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
 def print_progress(iteration, total, prefix='', suffix='', decimals=1, length=100, fill='█'):
     """
     Call in a loop to create terminal progress bar
@@ -69,20 +71,3 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, length=10
     # Print New Line on Complete
     if iteration == total:
         print()
-
-
-def intersect_arrays(arr1, arr2):
-    # returns intersections of both arrays. If one of them is empty,
-    # returns the other one. If both are empty, returns an empty list
-    if isinstance(arr1, list): arr1 = np.array(arr1)
-    if isinstance(arr2, list): arr2 = np.array(arr2)
-    if arr1.shape[0] == 0:
-        if arr2.shape[0] == 0:
-            print("both arrays empty, returning empty")
-            return []
-        print("arr1 empty, returning arr2")
-        return arr2
-    if arr2.shape[0] == 0:
-        print("arr2 empty, returning arr1")
-        return arr1
-    return np.intersect1d(arr1, arr2)

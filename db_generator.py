@@ -1,13 +1,14 @@
 import csv
-import ogr
 import time
-import os
-import pandas as pd
+from itertools import combinations as combos
+from math import sqrt, pi
+from operator import itemgetter
+
 import h5py
 import numpy as np
-from operator import itemgetter
-from math import sqrt, degrees, sin, pi, fabs
-from itertools import combinations as combos
+import ogr
+import pandas as pd
+
 import k_vector
 from util import approximate_visual_distance, calculate_pair_distances
 
@@ -18,13 +19,6 @@ file_pairs_index_db = db_basic_path + 'pairs_index.h5'
 file_pairs_data_db = db_basic_path + 'pairs_data.h5'
 file_k_floats = db_basic_path + 'k_floats.h5'
 file_k_ints = db_basic_path + 'k_integers.h5'
-
-
-# shape_file_lin = '/home/timo/code/util/resources/LU78287GT_GIS/LU78287GT_Moon2000.shp'
-# shape_file_win = os.getcwd() + '\\resources\\LU78287GT_GIS\\LU78287GT_Moon2000.shp'
-# driver = ogr.GetDriverByName('ESRI Shapefile')
-# shape_dataset = driver.Open(shape_file_win, 0)
-# shape_crater_layer = shape_dataset.GetLayer()
 
 
 def get_craters_from_shapefile(crater_layer):
@@ -42,6 +36,11 @@ def get_craters_from_shapefile(crater_layer):
 
 
 def generate_basic_db():
+    shape_file_lin = '/home/timo/code/util/resources/LU78287GT_GIS/LU78287GT_Moon2000.shp'
+    # shape_file_win = os.getcwd() + '\\resources\\LU78287GT_GIS\\LU78287GT_Moon2000.shp'
+    driver = ogr.GetDriverByName('ESRI Shapefile')
+    shape_dataset = driver.Open(shape_file_lin, 0)
+    shape_crater_layer = shape_dataset.GetLayer()
     hdf = pd.HDFStore(file_crater_db)
     craters = get_craters_from_shapefile()
     length = len(craters)
@@ -59,7 +58,9 @@ def generate_basic_db():
     hdf.close()
 
 
-def generate_pairs_db(idx_start):
+def generate_pairs_db():
+    radius_moon = 1737.5
+    circumference_moon = 2 * pi * radius_moon
     start = time.time()
     hdf = pd.HDFStore(file_crater_db, 'r')
     db = hdf.get('/db')
@@ -124,12 +125,12 @@ def generate_pairs_db(idx_start):
 
 
 def generate_k_vector_db():
-    # index = np.array(h5py.File(db_basic_path + 'pairs_index.h5', 'r')['pairs_index'])
+    index = np.array(h5py.File(db_basic_path + 'pairs_index.h5', 'r')['pairs_index'])
     pairs = np.array(h5py.File(db_basic_path + 'pairs_data.h5', 'r')['pairs_data'])
-    # k_to_h5(k_vector.construct_k_vector(index[..., 0]), 'pairs_index_big')
-    # k_to_h5(k_vector.construct_k_vector(index[..., 1]), 'pairs_index_small')
-    # k_to_h5(k_vector.construct_k_vector(pairs[..., 0]), 'pairs_data_radius')
-    # k_to_h5(k_vector.construct_k_vector(pairs[..., 1]), 'pairs_data_distance'
+    k_to_h5(k_vector.construct_k_vector(index[..., 0]), 'pairs_index_big')
+    k_to_h5(k_vector.construct_k_vector(index[..., 1]), 'pairs_index_small')
+    k_to_h5(k_vector.construct_k_vector(pairs[..., 0]), 'pairs_data_radius')
+    k_to_h5(k_vector.construct_k_vector(pairs[..., 1]), 'pairs_data_distance')
     k_to_h5(k_vector.construct_k_vector(pairs[..., 2]), 'pairs_data_real_distance')
 
 

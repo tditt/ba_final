@@ -1,11 +1,12 @@
 import csv
-import sys
-from shutil import copy2, move
-from six import raise_from
 import glob
-from sklearn.model_selection import train_test_split
 import random
-from os import rename, getcwd
+import sys
+from os import rename
+from shutil import copy2, move
+
+from six import raise_from
+from sklearn.model_selection import train_test_split
 
 
 def combine_and_split_datasets(folder_list, destination_main, destination_test):
@@ -70,7 +71,7 @@ def convert_annotations_to_yolo(csv_data_file='annotations.csv'):
                         x1, x2, y1, y2, class_id = bounding_box.values()
                         line_to_write += ' ' + str(x1) + ',' + str(y1) + ',' + str(x2) + ',' + str(y2) + ',' + str(
                             class_id)
-                    print(f'{line_to_write}', file=annotations)
+                    #print(f'{line_to_write}', file=annotations)
 
     except ValueError as e:
         raise_from(ValueError('invalid CSV annotations file: {}: {}'.format(csv_data_file, e)), None)

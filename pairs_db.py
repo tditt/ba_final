@@ -1,7 +1,9 @@
-import numpy as np
 import h5py
+import numpy as np
 import pandas as pd
+
 import k_vector
+import util
 
 
 def read_hdf_to_ram(db_path, idx, target_arr, filename):
@@ -102,9 +104,66 @@ def search_d_appr(d_lower, d_upper):
                                     m_real_distance)
 
 
+def search_pair_rel(ci, cj, radii, centers, r_rel_tol, w_min, w_max, intersect_mode=True):
+    ci_tol = util.calculate_dynamic_r_rel_tol(radii[ci], w_max, w_min)
+    cj_tol = util.calculate_dynamic_r_rel_tol(radii[cj], w_max, w_min)
+    # ci_tol = .6
+    # cj_tol = .9
+    r_upper = radii[cj] * (1 + (r_rel_tol * cj_tol)) / (radii[ci] * (1 - (r_rel_tol * ci_tol)))
+    r_lower = radii[cj] * (1 - (r_rel_tol * cj_tol)) / (radii[ci] * (1 + (r_rel_tol * ci_tol)))
+    d = util.calculate_distance(centers[ci], centers[cj])
+    d_upper = d / (radii[ci] * (1 - (r_rel_tol * ci_tol)))
+    d_lower = d / (radii[ci] * (1 + (r_rel_tol * ci_tol)))
+    pair_ids = search_d_rel(d_lower, d_upper)
+    ci_candidates_d = get_ci_by_pair_ids(pair_ids)
+    cj_candidates_d = get_cj_by_pair_ids(pair_ids)
+    pair_ids = search_r_rel(r_lower, r_upper)
+    ci_candidates_r = get_ci_by_pair_ids(pair_ids)
+    cj_candidates_r = get_cj_by_pair_ids(pair_ids)
+    if intersect_mode:
+        ci_candidates = np.intersect1d(ci_candidates_d, ci_candidates_r)
+        cj_candidates = np.intersect1d(cj_candidates_d, cj_candidates_r)
+        return ci_candidates, cj_candidates
+    return ci_candidates_d, ci_candidates_r, cj_candidates_d, cj_candidates_r
+
+
+def search_pair_abs(ci, cj, radius_candidates, centers, dtol, intersect_mode=True):
+    d_appr = util.calculate_distance(centers[ci], centers[cj])
+    d_upper = d_appr * (1 + dtol)
+    d_lower = d_appr * (1 - dtol)
+    pair_ids = search_d_appr(d_lower, d_upper)
+    ci_candidates = get_ci_by_pair_ids(pair_ids)
+    cj_candidates = get_cj_by_pair_ids(pair_ids)
+    if intersect_mode:
+        ci_candidates = np.intersect1d(ci_candidates, radius_candidates[ci])
+        cj_candidates = np.intersect1d(cj_candidates, radius_candidates[cj])
+    return ci_candidates, cj_candidates
+
+
 def get_ci_by_pair_ids(pair_ids):
     return index[..., 0][pair_ids]
 
 
 def get_cj_by_pair_ids(pair_ids):
-    return index[..., 1][pair_ids],
+    return index[..., 1][pair_ids]
+
+
+def check_intersect_db(database):
+    found = False
+    for k, v in database.items():
+        if v.shape[0] <= 4:
+            for crater in v:
+                print('Potential candidate out of ', str(v.shape[0]), ' altogether: ',
+                      str(get_lunar_coordinates(crater)))
+            found = True
+    return found
+
+
+def check_vote_db(database):
+    found = False
+    for k, v in database.items():
+        sort = np.argsort(v)[::-1]
+        print('highest probability IDs for crater ', k, ' are:')
+        for i in range(5):
+            print(sort[i], ' (coords: ', get_lunar_coordinates(sort[i]), ' ) with ', v[sort[i]], ' votes')
+    return found
